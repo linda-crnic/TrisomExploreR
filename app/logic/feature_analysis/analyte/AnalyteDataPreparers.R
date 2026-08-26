@@ -89,6 +89,33 @@ PrecalculatedCategoricalSinglePreparer <- R6Class(
 )
 
 #' @export
+PrecalculatedLog2CategoricalSinglePreparer <- R6Class(
+    "PrecalculatedLog2CategoricalSinglePreparer",
+    inherit = CategoricalSinglePreparer,
+    public = list(
+        prepare = function(.data) {
+            self$prepared_data <- .data |>
+                mutate(
+                    # MeasuredValue is already log2-scaled in these packages.
+                    log2MeasuredValue = MeasuredValue,
+                    log2Measurement   = Measurement,
+                    highlightGroup = NA_character_  # if/when needed
+                ) |>
+                filter(
+                    is.finite(log2MeasuredValue)
+                ) |>
+                add_count(!!sym(self$analysis_variable_name), name = "n") |>
+                mutate(
+                    !!sym(self$analysis_variable_name) := paste0("<b>", .data[[self$analysis_variable_name]], "</b> (n=", n, ")"),
+                    text      = glue("LabID: {LabID} <br />{log2Measurement}: {log2MeasuredValue}")
+                ) |>
+                select(-n)
+            return(invisible(self$prepared_data))
+        }
+    )
+)
+
+#' @export
 TOFAEndpointsCategoricalPreparer <- R6Class(
     "TOFAEndpointsCategoricalPreparer",
     inherit = PrecalculatedCategoricalSinglePreparer,

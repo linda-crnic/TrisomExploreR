@@ -9,7 +9,8 @@ box::use(
     app/logic/feature_analysis/analyte/AnalyteDataManagers[RuntimeAnalyteDataSource,
         PreCalcualtedAnalyteDataSource, CorrelatesAnalyteDataSource, PreCalcualtedTOFAAnalyteDataSource],
     app/logic/feature_analysis/analyte/AnalyteDataPreparers[CategoricalSinglePreparer, PrecalculatedCategoricalSinglePreparer,
-        TOFAEndpointsCategoricalPreparer, ContinuousSinglePreparer, HeatmapPreparer, CorrelatesPreparer, CorrelatesHeatmapPreparer],
+        PrecalculatedLog2CategoricalSinglePreparer, TOFAEndpointsCategoricalPreparer, ContinuousSinglePreparer,
+        HeatmapPreparer, CorrelatesPreparer, CorrelatesHeatmapPreparer],
     app/logic/feature_analysis/analyte/AnalytePlotStrategies[BoxPlotStrategy, ScatterPlotStrategy,
         HeatmapPlotStrategy, ScatterPlotWithSmoothingStrategy]
 )
@@ -35,11 +36,41 @@ PREPARER_MAP <- list(
     Scatter = ContinuousSinglePreparer,
     Box = CategoricalSinglePreparer,
     PrecalcBox = PrecalculatedCategoricalSinglePreparer,
+    PrecalcLog2Box = PrecalculatedLog2CategoricalSinglePreparer,
     TOFAEndpointsBox = TOFAEndpointsCategoricalPreparer,
     Heatmap = HeatmapPreparer,
     Correlates = CorrelatesPreparer,
     CorrelatesHeatmap = CorrelatesHeatmapPreparer
 )
+
+isPrecalculatedLog2Package <- function(study_plan = NULL) {
+    if (is.null(study_plan)) {
+        return(FALSE)
+    }
+
+    package_manifest <- study_plan$package_manifest %||% list()
+    fact_name <- study_plan$fact_name
+
+    if (is.null(fact_name) || !nzchar(fact_name)) {
+        fact_names <- names(package_manifest$facts %||% list())
+        fact_names <- fact_names[!is.na(fact_names) & nzchar(trimws(fact_names))]
+
+        if (length(fact_names) > 0) {
+            fact_name <- fact_names[[1]]
+        }
+    }
+
+    fact_cfg <- NULL
+
+    if (!is.null(fact_name) && nzchar(fact_name)) {
+        fact_cfg <- (package_manifest$facts %||% list())[[fact_name]]
+    }
+
+    scale_tag <- tolower(trimws(as.character(
+        fact_cfg$measurement_scale %||% fact_cfg$measurement_transform %||% ""
+    )))
+    identical(scale_tag, "log2")
+}
 
 PLOT_STRATEGY_MAP <- list(
     Scatter = ScatterPlotStrategy,
@@ -48,9 +79,10 @@ PLOT_STRATEGY_MAP <- list(
     Correlates = ScatterPlotWithSmoothingStrategy
 )
 
-getRouteProfile <- function(precalculated, analysis_type, analyte, analysis_config, study = NULL) {
+getRouteProfile <- function(precalculated, analysis_type, analyte, analysis_config, study = NULL, study_plan = NULL) {
     normalized_analysis_type <- trimws(analysis_type)
     plot_kind <- getPlotKind(normalized_analysis_type, analyte)
+    is_precalculated_log2 <- isPrecalculatedLog2Package(study_plan)
 
     data_source_key <- case_when(
         normalized_analysis_type == "Correlates" ~ "Correlates",
@@ -63,6 +95,7 @@ getRouteProfile <- function(precalculated, analysis_type, analyte, analysis_conf
         normalized_analysis_type == "Correlates" && plot_kind == "Scatter" ~ "Correlates",
         normalized_analysis_type == "Correlates" && plot_kind == "Heatmap" ~ "CorrelatesHeatmap",
         isTRUE(precalculated) && plot_kind == "Box" && identical(study, "tofa_proteomics_endpoints") ~ "TOFAEndpointsBox",
+        isTRUE(precalculated) && plot_kind == "Box" && isTRUE(is_precalculated_log2) ~ "PrecalcLog2Box",
         isTRUE(precalculated) && plot_kind == "Box" ~ "PrecalcBox",
         TRUE ~ plot_kind
     )
@@ -175,7 +208,14 @@ getFeatureAnalysisForAnalyte <- function(
         NULL,
         study_plan = study_plan
     )
-    route_profile <- getRouteProfile(precalculated, analysis_config$AnalysisType, analyte, analysis_config, study = study)
+    route_profile <- getRouteProfile(
+        precalculated,
+        analysis_config$AnalysisType,
+        analyte,
+        analysis_config,
+        study = study,
+        study_plan = study_plan
+    )
     data_src <- getDataSource(route_profile, analysis_config, analyte, study_plan = study_plan, ...)
     preparer <- getPreparer(route_profile, analysis_config, analyte, ...)
     plotter <- getPlotStrategy(route_profile, analysis_config, analyte, ...)
