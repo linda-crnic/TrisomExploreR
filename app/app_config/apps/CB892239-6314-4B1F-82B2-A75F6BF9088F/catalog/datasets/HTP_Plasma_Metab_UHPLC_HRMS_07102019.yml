@@ -1,0 +1,22 @@
+id: HTP_Plasma_Metab_UHPLC_HRMS_07102019
+
+package: HTP_Plasma_Metab_UHPLC_HRMS_07102019
+
+available_features: 
+
+    karyotype:
+        enabled: true
+
+    age:
+        enabled: true
+
+    sex:
+        enabled: true
+
+    bmi:
+        enabled: false
+        reason: "insufficient data available"
+        
+    comorbidity:
+        enabled: false
+        reason: "insufficient data available"

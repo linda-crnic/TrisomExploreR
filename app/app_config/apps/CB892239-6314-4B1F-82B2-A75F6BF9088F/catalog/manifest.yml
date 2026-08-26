@@ -1,0 +1,20 @@
+schema_version: 1.0
+
+application:
+  id: 8EAFE75F-DE82-44AB-9745-C1C2B5233258
+  name: TrisomExplorer | Metabolome - Internal
+  version: 0.9.0
+
+catalog:
+
+  analyses:
+    path: analyses/
+
+  features:
+    path: features/
+
+  datasets:
+    path: datasets/
+
+  statistics:
+    path: statistics/

@@ -1,0 +1,20 @@
+id: P4C_metabolomics_04292020
+
+package: P4C_metabolomics_04292020
+
+available_features: 
+
+    karyotype:
+        enabled: true
+
+    age:
+        enabled: true
+
+    sex:
+        enabled: true
+
+    bmi:
+        enabled: true
+        
+    comorbidity:
+        enabled: true

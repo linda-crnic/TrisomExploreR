@@ -1,0 +1,22 @@
+id: HTP_METAB_09172019
+
+package: HTP_METAB_09172019
+
+available_features: 
+
+    karyotype:
+        enabled: true
+
+    age:
+        enabled: true
+
+    sex:
+        enabled: true
+
+    bmi:
+        enabled: false
+        reason: "insufficient data available"
+        
+    comorbidity:
+        enabled: false
+        reason: "insufficient data available"
