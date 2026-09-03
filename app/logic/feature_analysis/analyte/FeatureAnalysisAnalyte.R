@@ -95,7 +95,8 @@ getRouteProfile <- function(precalculated, analysis_type, analyte, analysis_conf
         normalized_analysis_type == "Correlates" && plot_kind == "Scatter" ~ "Correlates",
         normalized_analysis_type == "Correlates" && plot_kind == "Heatmap" ~ "CorrelatesHeatmap",
         isTRUE(precalculated) && plot_kind == "Box" && identical(study, "tofa_proteomics_endpoints") ~ "TOFAEndpointsBox",
-        isTRUE(precalculated) && plot_kind == "Box" && isTRUE(is_precalculated_log2) ~ "PrecalcLog2Box",
+        # measurement_scale describes the fact data, independent of statistic execution_mode
+        plot_kind == "Box" && isTRUE(is_precalculated_log2) ~ "PrecalcLog2Box",
         isTRUE(precalculated) && plot_kind == "Box" ~ "PrecalcBox",
         TRUE ~ plot_kind
     )
