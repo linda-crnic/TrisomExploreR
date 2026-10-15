@@ -1,0 +1,7 @@
+id: tofa_metabolomics
+
+package: TOFA_Metabolomics
+
+available_features:
+    timepoint:
+        enabled: true
